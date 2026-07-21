@@ -1,0 +1,101 @@
+name: ${COMPOSE_PROJECT_NAME:?Set COMPOSE_PROJECT_NAME in workbench.env}
+
+services:
+  workbench:
+    image: ${IMAGE_NAME:?Set IMAGE_NAME}:${IMAGE_TAG:?Set IMAGE_TAG}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:?Set BASE_IMAGE}
+        USER_NAME: ${CONTAINER_USER:?Set CONTAINER_USER}
+        USER_UID: ${HOST_UID:?Set HOST_UID}
+        USER_GID: ${HOST_GID:?Set HOST_GID}
+    container_name: ${CONTAINER_NAME:?Set CONTAINER_NAME}
+    hostname: ${CONTAINER_NAME:?Set CONTAINER_NAME}
+    init: true
+    user: "${HOST_UID}:${HOST_GID}"
+    group_add:
+      - "${HOST_EXTRA_GID:?Set HOST_EXTRA_GID}"
+    working_dir: /workspace
+    command: ["sleep", "infinity"]
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+    gpus: all
+    cpus: "${CPU_LIMIT:-32}"
+    mem_limit: ${MEM_LIMIT:-150g}
+    memswap_limit: ${MEMSWAP_LIMIT:-150g}
+    shm_size: ${SHM_SIZE:-16g}
+    pids_limit: 4096
+
+    environment:
+      HOME: /home/${CONTAINER_USER}
+      PATH: /opt/conda/bin:/opt/conda/envs/r-sc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      CONDA_ENVS_PATH: /workspace/.conda/envs:/opt/conda/envs
+      CONDA_PKGS_DIRS: /workspace/.conda/pkgs
+      XDG_CACHE_HOME: /workspace/.cache
+      NUMBA_CACHE_DIR: /workspace/.cache/numba
+      MPLCONFIGDIR: /workspace/.cache/matplotlib
+      JUPYTER_CONFIG_DIR: /workspace/.jupyter
+      R_LIBS_USER: /workspace/.R/library
+      TMPDIR: /workspace/tmp
+      PYTHONUNBUFFERED: "1"
+      MALLOC_ARENA_MAX: "4"
+      OMP_NUM_THREADS: "${THREAD_LIMIT:-16}"
+      OPENBLAS_NUM_THREADS: "${THREAD_LIMIT:-16}"
+      MKL_NUM_THREADS: "${THREAD_LIMIT:-16}"
+      WORKBENCH_UMASK: "027"
+      EXPECTED_MEM_LIMIT: ${MEM_LIMIT:-150g}
+      SMOKE_H5AD_PATH: /inputs/input-file/${INPUT_FILE_NAME:?Set INPUT_FILE_NAME}
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      memlock:
+        soft: -1
+        hard: -1
+
+    volumes:
+      - type: bind
+        source: ${WORKSPACE_HOST:?Set WORKSPACE_HOST}
+        target: /workspace
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${INPUT_A_HOST:?Set INPUT_A_HOST}
+        target: /inputs/input-a
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${INPUT_B_HOST:?Set INPUT_B_HOST}
+        target: /inputs/input-b
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${INPUT_FILE_HOST:?Set INPUT_FILE_HOST}
+        target: /inputs/input-file/${INPUT_FILE_NAME:?Set INPUT_FILE_NAME}
+        read_only: true
+        bind:
+          create_host_path: false
+
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+    labels:
+      org.opencontainers.image.title: single-cell-docker-workbench
+      org.opencontainers.image.description: GPU-enabled Python and R single-cell analysis workbench
+      io.github.single-cell-workbench.owner: ${CONTAINER_USER}
+      io.github.single-cell-workbench.managed-by: docker-compose

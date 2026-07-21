@@ -1,0 +1,18 @@
+# The only machine/user-specific registry file. Never commit it.
+workbench.env
+*.env
+!*.env.example
+
+# Local editor, notebook and language state.
+.DS_Store
+.vscode/
+.idea/
+**/.ipynb_checkpoints/
+**/__pycache__/
+**/*.py[cod]
+.Rhistory
+.RData
+
+# Logs and accidental local workspaces.
+*.log
+workspace/

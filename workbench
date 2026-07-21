@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+env_file=${WORKBENCH_ENV_FILE:-"$repo_dir/workbench.env"}
+compose=(docker compose --env-file "$env_file" -f "$repo_dir/compose.yaml")
+
+usage() {
+  cat <<'EOF'
+Usage: ./workbench COMMAND [ARGS...]
+
+Commands:
+  preflight              Read-only host, path, Docker, GPU, and Compose checks
+  config                 Render the resolved Compose configuration
+  build                  Build the workbench image; do not start a container
+  up                     Create/start the container without rebuilding
+  stop                   Stop the container without removing it
+  down                   Remove the container/network; bind-mounted data persists
+  restart                Restart the existing container
+  ps                     Show Compose service status
+  logs [ARGS...]          Show logs (default: last 200 lines)
+  shell                  Open a Bash shell in the running container
+  exec COMMAND [ARGS...] Run a command in the running container
+  r                      Open terminal R from the r-sc environment
+  smoke                  Run GPU, memory, mount, Python, h5ad, and R checks
+  init-project NAME      Create one project tree in WORKSPACE_HOST/projects
+  help                   Show this message
+
+Set WORKBENCH_ENV_FILE to use a registry file other than ./workbench.env.
+EOF
+}
+
+require_env() {
+  if [[ ! -r "$env_file" ]]; then
+    echo "ERROR: cannot read $env_file" >&2
+    echo "Copy workbench.env.example to workbench.env and fill it first." >&2
+    exit 1
+  fi
+}
+
+command=${1:-help}
+if [[ $# -gt 0 ]]; then
+  shift
+fi
+
+case "$command" in
+  preflight)
+    "$repo_dir/scripts/preflight-host.sh" "$env_file"
+    ;;
+  config)
+    require_env
+    "${compose[@]}" config "$@"
+    ;;
+  build)
+    require_env
+    "${compose[@]}" build "$@" workbench
+    ;;
+  up)
+    require_env
+    "${compose[@]}" up -d --no-build workbench
+    ;;
+  stop)
+    require_env
+    "${compose[@]}" stop workbench
+    ;;
+  down)
+    require_env
+    "${compose[@]}" down
+    ;;
+  restart)
+    require_env
+    "${compose[@]}" restart workbench
+    ;;
+  ps)
+    require_env
+    "${compose[@]}" ps
+    ;;
+  logs)
+    require_env
+    "${compose[@]}" logs --tail=200 "$@" workbench
+    ;;
+  shell)
+    require_env
+    "${compose[@]}" exec workbench bash
+    ;;
+  exec)
+    require_env
+    [[ $# -gt 0 ]] || { echo "ERROR: exec requires a command" >&2; exit 2; }
+    "${compose[@]}" exec workbench "$@"
+    ;;
+  r)
+    require_env
+    "${compose[@]}" exec workbench \
+      conda run --no-capture-output -n r-sc R
+    ;;
+  smoke)
+    require_env
+    "${compose[@]}" exec workbench single-cell-workbench-smoke-test
+    ;;
+  init-project)
+    [[ $# -eq 1 ]] || { echo "ERROR: init-project requires one project name" >&2; exit 2; }
+    "$repo_dir/scripts/init-project.sh" "$1" "$env_file"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    echo "ERROR: unknown command: $command" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

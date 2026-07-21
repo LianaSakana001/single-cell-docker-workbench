@@ -1,0 +1,22 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bash syntax
+        run: bash -n workbench scripts/*.sh
+      - name: ShellCheck
+        run: shellcheck workbench scripts/*.sh
+      - name: Compose interpolation
+        run: docker compose --env-file workbench.env.example -f compose.yaml config --quiet
+      - name: Release privacy audit
+        run: bash scripts/release-audit.sh

@@ -1,0 +1,15 @@
+.git
+.github
+.gitignore
+.DS_Store
+LICENSE
+README.md
+SECURITY.md
+templates/
+workbench
+workbench.env
+*.env
+*.env.example
+**/.ipynb_checkpoints
+**/__pycache__
+**/*.pyc

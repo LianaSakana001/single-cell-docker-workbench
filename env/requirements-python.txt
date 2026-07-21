@@ -1,0 +1,7 @@
+# The upstream image provides Python, Scanpy, AnnData, RAPIDS,
+# CuPy, JupyterLab and CUDA. Keep this extension list deliberately small.
+notebook>=7,<8
+harmonypy>=0.2,<1
+openpyxl>=3.1,<4
+xlsxwriter>=3.2,<4
+psutil>=7,<8

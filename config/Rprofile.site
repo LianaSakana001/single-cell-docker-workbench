@@ -1,0 +1,10 @@
+local({
+  repos <- getOption("repos")
+  repos["CRAN"] <- "https://mirrors.tuna.tsinghua.edu.cn/CRAN/"
+  options(repos = repos)
+})
+
+options(
+  Ncpus = max(1L, min(8L, parallel::detectCores(logical = FALSE))),
+  timeout = 600
+)
