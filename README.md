@@ -13,7 +13,8 @@ large sparse AnnData/10X workflows on a shared Linux workstation.
 **Liang Yu**  
 Chinese Academy of Medical Sciences & Peking Union Medical College  
 GitHub: [@LianaSakana001](https://github.com/LianaSakana001)  
-ORCID: [0009-0002-2054-7620](https://orcid.org/0009-0002-2054-7620)
+ORCID: [0009-0002-2054-7620](https://orcid.org/0009-0002-2054-7620)  
+Contact: [yuliang5679@163.com](mailto:yuliang5679@163.com)
 
 ## What is included
 
