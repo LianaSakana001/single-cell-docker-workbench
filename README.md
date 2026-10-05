@@ -8,6 +8,13 @@ large sparse AnnData/10X workflows on a shared Linux workstation.
 容器、镜像名称和工作区；所有需要替换的身份、路径与资源参数集中在一份
 `workbench.env` 登记表中。
 
+## Maintainer
+
+**Liang Yu**  
+Chinese Academy of Medical Sciences & Peking Union Medical College  
+GitHub: [@LianaSakana001](https://github.com/LianaSakana001)  
+ORCID: [0009-0002-2054-7620](https://orcid.org/0009-0002-2054-7620)
+
 ## What is included
 
 - A pinned `rapids-singlecell` CUDA base image with Scanpy, AnnData, CuPy and
@@ -248,8 +255,9 @@ Each account should use its own clone or configuration directory:
    allowed inputs.
 4. Run preflight, build, up, and smoke in order.
 
-No personal account name, host path, institutional label, participant metadata,
-or secret belongs in the tracked repository.
+Keep deployment-specific account names, host paths, institutional labels,
+participant metadata, and secrets out of the tracked repository. Public
+maintainer attribution is documented in the Maintainer section.
 
 ## License
 
