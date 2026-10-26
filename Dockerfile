@@ -85,11 +85,23 @@ COPY scripts/entrypoint.sh /usr/local/bin/single-cell-workbench-entrypoint
 COPY scripts/smoke-test.sh /usr/local/bin/single-cell-workbench-smoke-test
 RUN chmod 0755 \
       /usr/local/bin/single-cell-workbench-entrypoint \
-      /usr/local/bin/single-cell-workbench-smoke-test
+      /usr/local/bin/single-cell-workbench-smoke-test; \
+    chmod 0644 \
+      /usr/local/bin/single-cell-workbench-check-gpu-stack.py \
+      /etc/conda/condarc \
+      /etc/pip.conf \
+      /etc/R/Rprofile.site
 
 WORKDIR /workspace
 ENV CUDA_PATH=/opt/conda/targets/x86_64-linux
 USER ${USER_UID}:${USER_GID}
+
+# COPY preserves restrictive modes from build contexts created with umask 077.
+# Verify the public runtime files as the real non-root user, without using a GPU.
+RUN test -r /etc/conda/condarc && \
+    test -r /etc/pip.conf && \
+    test -r /etc/R/Rprofile.site && \
+    /opt/conda/bin/python -B /usr/local/bin/single-cell-workbench-check-gpu-stack.py --check-cuda-path
 
 ENTRYPOINT ["/usr/local/bin/single-cell-workbench-entrypoint"]
 CMD ["sleep", "infinity"]
