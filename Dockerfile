@@ -43,15 +43,19 @@ COPY config/pip.conf /etc/pip.conf
 COPY config/Rprofile.site /etc/R/Rprofile.site
 COPY env/requirements-python.txt /tmp/requirements-python.txt
 COPY env/environment-r.yml /tmp/environment-r.yml
+COPY env/constraints-python.txt /tmp/constraints-python.txt
+COPY scripts/check-gpu-stack.py /usr/local/bin/single-cell-workbench-check-gpu-stack.py
 
 # Preserve the upstream GPU stack and add only analysis-facing tools.
 RUN /opt/conda/bin/python -m pip install \
       --no-cache-dir \
       --upgrade-strategy only-if-needed \
+      --constraint /tmp/constraints-python.txt \
       --requirement /tmp/requirements-python.txt; \
     mamba env create --file /tmp/environment-r.yml; \
     mamba clean --all --yes; \
-    rm -f /tmp/requirements-python.txt /tmp/environment-r.yml
+    rm -f /tmp/requirements-python.txt /tmp/environment-r.yml /tmp/constraints-python.txt; \
+    /opt/conda/bin/python -B /usr/local/bin/single-cell-workbench-check-gpu-stack.py
 
 # Create or adapt a non-root account to match the host UID/GID.
 RUN if ! getent group "${USER_GID}" >/dev/null; then \
@@ -84,6 +88,7 @@ RUN chmod 0755 \
       /usr/local/bin/single-cell-workbench-smoke-test
 
 WORKDIR /workspace
+ENV CUDA_PATH=/opt/conda/targets/x86_64-linux
 USER ${USER_UID}:${USER_GID}
 
 ENTRYPOINT ["/usr/local/bin/single-cell-workbench-entrypoint"]

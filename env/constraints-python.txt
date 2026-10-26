@@ -1,0 +1,4 @@
+# Matched to the pinned CUDA 12 base image in Dockerfile/workbench.env.example.
+# Review these together when changing BASE_IMAGE; do not mix CUDA major versions.
+cuda-bindings==12.9.7
+cuda-core==0.7.0

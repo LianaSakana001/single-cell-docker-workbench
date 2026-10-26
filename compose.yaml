@@ -34,6 +34,7 @@ services:
     environment:
       HOME: /home/${CONTAINER_USER}
       PATH: /opt/conda/bin:/opt/conda/envs/r-sc/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      CUDA_PATH: /opt/conda/targets/x86_64-linux
       CONDA_ENVS_PATH: /workspace/.conda/envs:/opt/conda/envs
       CONDA_PKGS_DIRS: /workspace/.conda/pkgs
       XDG_CACHE_HOME: /workspace/.cache

@@ -238,6 +238,9 @@ for 150 GiB cannot both consume 150 GiB on a 256 GiB host.
 - Edit `env/requirements-python.txt` for small base-Python additions.
 - Edit `env/environment-r.yml` for the shared terminal-R environment.
 - Rebuild with `./workbench build` after changing either list.
+- Keep `env/constraints-python.txt` matched to the pinned base image. The build
+  checks the installed CUDA bindings against the CUDA family and package record
+  of the base image without importing GPU libraries.
 - Create experiment-specific environments under `/workspace/.conda/envs` when
   the package set should not become part of the shared image.
 
@@ -245,6 +248,37 @@ The pinned upstream image is configurable because NVIDIA driver/CUDA
 compatibility differs between hosts. Do not replace `BASE_IMAGE` with an
 unpinned moving tag in a production workbench; test any update with
 `./workbench smoke`.
+
+### CUDA 12 compatibility
+
+The shipped x86-64 image uses the Conda CUDA toolkit at
+`/opt/conda/targets/x86_64-linux`. `CUDA_PATH` is set in both the image and
+Compose so CuPy finds the intended toolkit rather than choosing another
+installation automatically.
+
+CPU Harmony is pinned to `harmonypy==0.1.0`. Version 0.2.0 adds a PyTorch
+dependency; installing the default Linux PyTorch wheel can bring CUDA 13
+libraries and replace the CUDA 12 bindings required by this base image. Keep
+PyTorch/scVI experiments in a separate environment with an explicitly compatible
+CUDA stack instead of letting them replace base packages.
+
+If `cuda.bindings.cydriver does not export expected C function` appears, compare
+the installed `cuda-bindings` version with the `cuda-core` Conda build. A CUDA 12
+build paired with CUDA 13 bindings is not a data-permission problem. Rebuild a
+new image tag with the constraints and the toolkit path above; changing only
+the bindings in an already mixed environment may leave other incompatible CUDA
+libraries installed. Keep the previous image until runtime validation succeeds.
+
+The build check does not replace runtime validation. Run `./workbench smoke`
+after deployment. It prints import and kernel stages, disables core dumps, and
+uses a read-only backed h5ad open. It also creates a small write probe under
+`/workspace/tmp` and may create caches; it does not run a biological analysis.
+CUDA imports or kernels still require a compatible host driver and available
+GPU resources. A passing metadata or build check alone is not a passing GPU test.
+
+`./workbench smoke` and `./workbench exec ...` automatically disable TTY/stdin
+attachment when called from a script or here-document. Interactive terminal
+calls retain the usual Compose TTY behavior.
 
 ## Migrating to another account
 
