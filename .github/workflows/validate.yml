@@ -13,9 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Bash syntax
-        run: bash -n workbench scripts/*.sh
+        run: |
+          for script in workbench scripts/*.sh; do
+            bash -n "$script"
+          done
       - name: ShellCheck
         run: shellcheck workbench scripts/*.sh
+      - name: Deployment regression tests (no GPU required)
+        run: python3 -B -m unittest discover -s tests -v
       - name: Compose interpolation
         run: docker compose --env-file workbench.env.example -f compose.yaml config --quiet
       - name: Release privacy audit

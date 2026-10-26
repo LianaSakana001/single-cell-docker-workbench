@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
+ulimit -c 0
+
+echo "== CUDA package compatibility (no GPU computation) =="
+/opt/conda/bin/python -B /usr/local/bin/single-cell-workbench-check-gpu-stack.py --check-cuda-path
 
 echo "== Identity and mounts =="
 id
@@ -54,11 +58,17 @@ echo "== Python =="
 /opt/conda/bin/python - <<'PY'
 import importlib.metadata as md
 import os
+import faulthandler
+import importlib
+
+faulthandler.enable()
+for module in ("anndata", "cupy", "rapids_singlecell", "scanpy"):
+    print(f"loading {module}", flush=True)
+    importlib.import_module(module)
+    print(f"loaded {module}", flush=True)
 
 import anndata
 import cupy
-import rapids_singlecell
-import scanpy
 
 print("python packages:")
 for name in ("anndata", "scanpy", "rapids-singlecell", "cupy", "notebook", "harmonypy"):
@@ -67,11 +77,13 @@ for name in ("anndata", "scanpy", "rapids-singlecell", "cupy", "notebook", "harm
     except md.PackageNotFoundError:
         print(f"  {name}=MISSING")
 
-print("cupy devices:", cupy.cuda.runtime.getDeviceCount())
+print("starting CuPy device/kernel probe", flush=True)
+print("cupy devices:", cupy.cuda.runtime.getDeviceCount(), flush=True)
 gpu_probe = cupy.arange(10, dtype=cupy.float32).sum()
-print("cupy kernel probe:", float(gpu_probe.get()))
+print("cupy kernel probe:", float(gpu_probe.get()), flush=True)
 
 h5ad_path = os.environ["SMOKE_H5AD_PATH"]
+print("opening the configured h5ad in read-only backed mode", flush=True)
 adata = anndata.read_h5ad(h5ad_path, backed="r")
 try:
     print("backed h5ad shape:", adata.shape)

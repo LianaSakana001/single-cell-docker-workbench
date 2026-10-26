@@ -38,6 +38,14 @@ require_env() {
   fi
 }
 
+compose_exec() {
+  local flags=()
+  if [[ ! -t 0 || ! -t 1 ]]; then
+    flags=(-T --interactive=false)
+  fi
+  "${compose[@]}" exec "${flags[@]}" workbench "$@"
+}
+
 command=${1:-help}
 if [[ $# -gt 0 ]]; then
   shift
@@ -86,7 +94,7 @@ case "$command" in
   exec)
     require_env
     [[ $# -gt 0 ]] || { echo "ERROR: exec requires a command" >&2; exit 2; }
-    "${compose[@]}" exec workbench "$@"
+    compose_exec "$@"
     ;;
   r)
     require_env
@@ -95,7 +103,7 @@ case "$command" in
     ;;
   smoke)
     require_env
-    "${compose[@]}" exec workbench single-cell-workbench-smoke-test
+    compose_exec single-cell-workbench-smoke-test
     ;;
   init-project)
     [[ $# -eq 1 ]] || { echo "ERROR: init-project requires one project name" >&2; exit 2; }
